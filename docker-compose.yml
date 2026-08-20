@@ -1,0 +1,35 @@
+
+services:
+  #  app: 
+       # build: .
+       # ports:
+       #     - "8080:8080" #(Для RestAPI) порт который будет использоваться на пк и на контейнере для проброса в него какой-либо информации из вне "порт_на_пк:порт_в_контейнере"
+      #  env_file:
+       #     - .env
+      #  environment: # как передать настройки (переменные окружения)-переменные которые будут использоваться в коде но для того что-бы они там не светились будут передававться тут 
+      #      - DB_HOST=db # имя-9-- сервиса из docker-compose
+       #     - DB_PORT=5432 #внутренний порт бд
+      #      - DB_USER=user_postgres #имя пользователя БД
+      #      - DB_NAME=crypto #имя бд 
+       # depends_on:
+      #      db: # приложение не сможет работать без бд(сначала запуск бд)
+       #         condition: service_healthy #ждет пока бд будет готово
+    db: 
+        image: postgres:15.18  #название:тег на Data base из docker hub
+        ports:
+        - "5432:5432"
+        env_file:
+            - .env
+        environment:
+            - POSTGRES_USER=user_postgres
+            - POSTGRES_DB=crypto
+            - POSTGRES_PASSWORD=${DB_PASSWORD} #берет запись из secret.env
+        volumes:
+            - pgdata:/var/lib/postgresql/data # так как бд хранит данные нужно volumes
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U user_postgres"] #pg_isready - встроенная утилита которая проверяет на то что сервис готов принимать соединение
+            interval: 5s
+            timeout: 5s
+            retries: 5
+volumes: #
+    pgdata: #если использовать именнованный volumes их нужно обьявлять 
