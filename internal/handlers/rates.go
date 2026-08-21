@@ -16,6 +16,17 @@ type RatesRepository interface {
 	SaveInfo(ctx context.Context, rate models.RateResponse) error
 }
 
+// GetRateHandler godoc
+// @Summary Получить курс конкретной валюты
+// @Description Возвращает актуальный курс криптовалюты по символу (например, BTCUSDT)
+// @Tags rates
+// @Accept json
+// @Produce json
+// @Param symbol path string true "Символ валютной пары" example(BTCUSDT)
+// @Success 200 {object} models.RateResponse
+// @Failure 400 {string} string "Неверный запрос"
+// @Failure 502 {string} string "Проблема со сторонним провайдером"
+// @Router /api/rates/{symbol} [get]
 func GetRateHandler(repo RatesRepository) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) { //(Функция замыкание)пишем внутри функции потому что при использовании этой функции полученные данные запишуться в w и r
@@ -41,6 +52,15 @@ func GetRateHandler(repo RatesRepository) http.HandlerFunc {
 	} //w-инструмент для ответа, r - данные запроса
 }
 
+// GetRateAllHandlers godoc
+// @Summary Получить все курсы валют
+// @Description Возвращает массив актуальных курсов всех криптовалют
+// @Tags rates
+// @Accept json
+// @Produce json
+// @Success 200 {array} models.RateResponse
+// @Failure 500 {string} string "Ошибка сервера"
+// @Router /api/rates [get]
 func GetRateAllHandlers(rate RatesRepository) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {

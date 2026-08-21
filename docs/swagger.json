@@ -1,0 +1,115 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API для получения курсов криптовалют с Binance\n\nЭтот API предоставляет доступ к актуальным курсам криптовалют.\nДанные обновляются каждые 5 минут.",
+        "title": "Crypto Bot API",
+        "contact": {
+            "name": "Deef2k",
+            "url": "https://github.com/Deef2k"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/api/rates": {
+            "get": {
+                "description": "Возвращает массив актуальных курсов всех криптовалют",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "rates"
+                ],
+                "summary": "Получить все курсы валют",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.RateResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/rates/{symbol}": {
+            "get": {
+                "description": "Возвращает актуальный курс криптовалюты по символу (например, BTCUSDT)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "rates"
+                ],
+                "summary": "Получить курс конкретной валюты",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "BTCUSDT",
+                        "description": "Символ валютной пары",
+                        "name": "symbol",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.RateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Неверный запрос",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "502": {
+                        "description": "Проблема со сторонним провайдером",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.RateResponse": {
+            "type": "object",
+            "properties": {
+                "highPrice": {
+                    "type": "string"
+                },
+                "lowPrice": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "string"
+                },
+                "priceChangePercent": {
+                    "type": "string"
+                },
+                "symbol": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

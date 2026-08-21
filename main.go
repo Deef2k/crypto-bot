@@ -13,7 +13,23 @@ import (
 	"github.com/Deef2k/crypto-bot/internal/handlers"
 	"github.com/Deef2k/crypto-bot/internal/updater"
 	"github.com/joho/godotenv"
+
+	_ "github.com/Deef2k/crypto-bot/docs"        // ← импорт docks, _ - импорт без использования напрямую (для функции init)
+	httpSwagger "github.com/swaggo/http-swagger" // ← Swagger UI
 )
+
+// @title Crypto Bot API
+// @version 1.0
+// @description API для получения курсов криптовалют с Binance
+// @description
+// @description Этот API предоставляет доступ к актуальным курсам криптовалют.
+// @description Данные обновляются каждые 5 минут.
+
+// @contact.name Deef2k
+// @contact.url https://github.com/Deef2k
+
+// @host localhost:8080
+// @BasePath /
 
 func main() {
 	stop := make(chan os.Signal, 1)                         //создаем канал для ловли системных вызовов
@@ -50,6 +66,7 @@ func main() {
 
 	mux.Handle("/api/rates/{symbol}", rateHandler) //говорим что если постучаться с таким запросом то передавай его в rateHandler
 	mux.Handle("/api/rates", allRateHandler)
+	mux.Handle("/swagger/", httpSwagger.WrapHandler)
 
 	go http.ListenAndServe(":8080", mux)
 
