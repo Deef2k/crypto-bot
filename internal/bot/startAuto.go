@@ -19,13 +19,13 @@ func startAuto(b *Bot, update *botapi.Update) {
 		if err != nil {
 			slog.Warn("Не удалось приобразовать строку в число.Ошибка - ", "err", err)
 			b.bot.Send(botapi.NewMessage(update.Message.Chat.ID, "Произошла ошибка в запросе(точно ли стоит число?)"))
-			cancel()
-			//не стоит добавлять Return так как из за маленького отключения от бд может выключиться авто обновление
+			cancel() //останавливаем контекст таймера(что-бы не было утечки памяти)
+			return
 		}
 		if timeTick <= 0 {
 			slog.Warn("Пользователь ввел число меньше 0 или 0.")
 			b.bot.Send(botapi.NewMessage(update.Message.Chat.ID, "Произошла ошибка в запросе(точно ли число выше или не равно 0?)"))
-			cancel()
+			return
 		} else {
 			b.pointer.mutex.Lock()
 			cancelFunc, exists := b.pointer.subscription[update.Message.Chat.ID]
@@ -56,7 +56,7 @@ func startAuto(b *Bot, update *botapi.Update) {
 							return
 						}
 						for _, rate := range rates {
-							textTicker += fmt.Sprintf("Symbol:%s,\n Price:%s,\n LowPrice24h:%s,\n HighPrice24:%s,\n PriceChangePercent24h:%s\n\n", rate.Symbol, rate.Price, rate.LowPrice24, rate.HighPrice24, rate.PriceChangePercent)
+							textTicker += fmt.Sprintf("Symbol:%s,\n Price:%s,\n LowPrice24h:%s,\n HighPrice24:%s,\n PriceChangePercent24h:%s,\n PriceChangePercent:%s\n\n", rate.Symbol, rate.Price, rate.LowPrice24, rate.HighPrice24, rate.PriceChangePercent24h, rate.PriceChangePercent1h)
 						}
 						msg = botapi.NewMessage(update.Message.Chat.ID, textTicker)
 						b.bot.Send(msg)

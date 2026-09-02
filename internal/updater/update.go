@@ -1,4 +1,4 @@
-package updater
+package updater //обновление курсов
 
 import (
 	"context"
@@ -6,18 +6,12 @@ import (
 	"time"
 
 	"github.com/Deef2k/crypto-bot/internal/api"
-	"github.com/Deef2k/crypto-bot/internal/handlers"
+	"github.com/Deef2k/crypto-bot/storage"
 )
 
-func Update(ctx context.Context, repo handlers.RatesRepository) {
-
-	valute := []string{"BTCUSDT", "ETHUSDT", "SOLUSDT"}
-
-	ticker := time.NewTicker(5 * time.Minute)
-	defer ticker.Stop()
-
-	for _, valut := range valute { //нужно что-бы выдать курсы сразу при запуске а потом уйти на 5 минутное ожидание
-		result, err := api.GetRate(valut)
+func ValutResult(ctx context.Context, repo storage.Repository, symbols []string, baseURL string) { //вывел в отдельную функцию так как используеться в нескольких местах DRY
+	for _, symbol := range symbols {
+		result, err := api.GetRate(symbol, baseURL)
 		if err != nil {
 			slog.Warn("Ошибка в получении данных с сайта ", "err", err) //warn - потому что не критическая ошибка
 			continue
@@ -26,26 +20,35 @@ func Update(ctx context.Context, repo handlers.RatesRepository) {
 			slog.Error("Ошибка в сохранение данных в БД", "err", err)
 			continue
 		}
-		slog.Info("Данные получены:", "valute", valut, "result", result)
+		slog.Info("Данные получены:", "symbol", symbol)
 	}
+}
+
+func Update(ctx context.Context, repo storage.Repository) {
+
+	symbols, err := repo.GetTrackedSymbols(ctx)
+	if err != nil {
+		slog.Error("Ошибка в получении символов из БД", "err", err)
+		return // так как дальнейшее смысл выполнения безсмыслен
+	}
+	baseURL := "https://api.binance.com"
+
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+
+	ValutResult(ctx, repo, symbols, baseURL)
 	for {
 		select {
 		case <-ctx.Done():
 			slog.Info("Получен сигнал,коректно завершаем работу програмы")
 			return //ctx - это канал открытый только на чтение и при срабатывании cancel канал закрывается и select понимает что он отработал
 		case <-ticker.C:
-			for _, valut := range valute {
-				result, err := api.GetRate(valut)
-				if err != nil {
-					slog.Warn("Ошибка в получении данных с сайта ", "err", err) //warn - потому что не критическая ошибка
-					continue
-				}
-				if err = repo.SaveInfo(ctx, result); err != nil {
-					slog.Error("Ошибка в сохранение данных в БД", "err", err)
-					continue
-				}
-				slog.Info("Данные получены:", "valute", valut, "result", result)
+			symbols, err := repo.GetTrackedSymbols(ctx)
+			if err != nil {
+				slog.Error("Ошибка в получении символов из БД", "err", err)
+				continue
 			}
+			ValutResult(ctx, repo, symbols, baseURL)
 		}
 	}
 }

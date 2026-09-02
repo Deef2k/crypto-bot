@@ -8,9 +8,13 @@ definitions:
         type: string
       price:
         type: string
-      priceChangePercent:
+      priceChangePercent1h:
+        type: string
+      priceChangePercent24h:
         type: string
       symbol:
+        description: заполнение полей - слева- их название в структуре,а справа значение
+          которое в это поле кладём
         type: string
     type: object
 host: localhost:8080
@@ -26,7 +30,7 @@ info:
   title: Crypto Bot API
   version: "1.0"
 paths:
-  /api/rates:
+  /rates:
     get:
       consumes:
       - application/json
@@ -47,11 +51,12 @@ paths:
       summary: Получить все курсы валют
       tags:
       - rates
-  /api/rates/{symbol}:
+  /rates/{symbol}:
     get:
       consumes:
       - application/json
-      description: Возвращает актуальный курс криптовалюты по символу (например, BTCUSDT)
+      description: 'Возвращает актуальный курс криптовалюты по символу (например:
+        BTCUSDT)'
       parameters:
       - description: Символ валютной пары
         example: BTCUSDT

@@ -64,11 +64,16 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.Handle("/api/rates/{symbol}", rateHandler) //говорим что если постучаться с таким запросом то передавай его в rateHandler
-	mux.Handle("/api/rates", allRateHandler)
+	mux.Handle("/rates/{symbol}", rateHandler) //говорим что если постучаться с таким запросом то передавай его в rateHandler
+	mux.Handle("/rates", allRateHandler)
 	mux.Handle("/swagger/", httpSwagger.WrapHandler)
 
-	go http.ListenAndServe(":8080", mux)
+	go func() { //запускаем горутину
+		err := http.ListenAndServe(":8080", mux)
+		if err != nil {
+			slog.Error("Проблема в запуске http сервера.Ошибка:", "err", err)
+		}
+	}()
 
 	go bot.Start(ctx, repo)
 

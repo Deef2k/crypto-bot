@@ -18,7 +18,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/rates": {
+        "/rates": {
             "get": {
                 "description": "Возвращает массив актуальных курсов всех криптовалют",
                 "consumes": [
@@ -50,9 +50,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/rates/{symbol}": {
+        "/rates/{symbol}": {
             "get": {
-                "description": "Возвращает актуальный курс криптовалюты по символу (например, BTCUSDT)",
+                "description": "Возвращает актуальный курс криптовалюты по символу (например: BTCUSDT)",
                 "consumes": [
                     "application/json"
                 ],
@@ -109,10 +109,14 @@ const docTemplate = `{
                 "price": {
                     "type": "string"
                 },
-                "priceChangePercent": {
+                "priceChangePercent1h": {
+                    "type": "string"
+                },
+                "priceChangePercent24h": {
                     "type": "string"
                 },
                 "symbol": {
+                    "description": "заполнение полей - слева- их название в структуре,а справа значение которое в это поле кладём",
                     "type": "string"
                 }
             }

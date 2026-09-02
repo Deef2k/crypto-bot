@@ -6,7 +6,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/Deef2k/crypto-bot/internal/handlers"
+	"github.com/Deef2k/crypto-bot/storage"
 	botapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -18,10 +18,10 @@ type Bot struct {
 	bot     *botapi.BotAPI
 	ctx     context.Context
 	pointer *SubscriptionManager
-	repo    handlers.RatesRepository
+	repo    storage.Repository
 }
 
-func Start(ctx context.Context, repo handlers.RatesRepository) {
+func Start(ctx context.Context, repo storage.Repository) {
 	token := os.Getenv("TG_TOKEN")
 	bot, err := botapi.NewBotAPI(token) //создание бота
 	if err != nil {
@@ -29,7 +29,7 @@ func Start(ctx context.Context, repo handlers.RatesRepository) {
 		return
 	}
 	subscriber := SubscriptionManager{
-		subscription: make(map[int64]context.CancelFunc),
+		subscription: make(map[int64]context.CancelFunc), //int64 - ключ User Телеграм,context -функция которая остновит авто рассылку
 		mutex:        sync.Mutex{},
 	}
 
@@ -57,7 +57,7 @@ func Start(ctx context.Context, repo handlers.RatesRepository) {
 		}
 
 		if update.Message.Command() == "rates" {
-			allRates(&myBot, &update)
+			separation(&myBot, &update)
 			continue
 		}
 		if update.Message.Command() == "start_auto" {
@@ -67,6 +67,15 @@ func Start(ctx context.Context, repo handlers.RatesRepository) {
 
 		if update.Message.Command() == "stop_auto" {
 			stopAuto(&myBot, &update)
+			continue
+		}
+
+		if update.Message.Command() == "remove_symbol" {
+			removeSymbol(&myBot, &update)
+			continue
+		}
+		if update.Message.Command() == "add_symbol" {
+			addSymbol(&myBot, &update)
 			continue
 		}
 	}

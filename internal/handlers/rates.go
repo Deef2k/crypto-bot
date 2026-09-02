@@ -1,24 +1,18 @@
-package handlers
+package handlers //	HTTP: GET /api/rates, GET /api/rates/{symbol}
 
 import (
-	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
 
 	"github.com/Deef2k/crypto-bot/internal/api"
 	"github.com/Deef2k/crypto-bot/internal/models"
+	"github.com/Deef2k/crypto-bot/storage"
 )
-
-type RatesRepository interface {
-	GetAllRates(ctx context.Context) ([]models.RateResponse, error)
-	GetLastRate(ctx context.Context, symbol string) (models.RateResponse, error)
-	SaveInfo(ctx context.Context, rate models.RateResponse) error
-}
 
 // GetRateHandler godoc
 // @Summary Получить курс конкретной валюты
-// @Description Возвращает актуальный курс криптовалюты по символу (например, BTCUSDT)
+// @Description Возвращает актуальный курс криптовалюты по символу (например: BTCUSDT)
 // @Tags rates
 // @Accept json
 // @Produce json
@@ -26,8 +20,8 @@ type RatesRepository interface {
 // @Success 200 {object} models.RateResponse
 // @Failure 400 {string} string "Неверный запрос"
 // @Failure 502 {string} string "Проблема со сторонним провайдером"
-// @Router /api/rates/{symbol} [get]
-func GetRateHandler(repo RatesRepository) http.HandlerFunc {
+// @Router /rates/{symbol} [get]
+func GetRateHandler(repo storage.Repository) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) { //(Функция замыкание)пишем внутри функции потому что при использовании этой функции полученные данные запишуться в w и r
 		symbol := r.PathValue("symbol") //так как у нас в binance.go указан symbol в http запросе то что-бы его взять нам нужно
@@ -36,7 +30,7 @@ func GetRateHandler(repo RatesRepository) http.HandlerFunc {
 		var BDerr error
 		if err != nil {
 			slog.Warn("Не удалось найти данные из бд по валюте,запрашиваем данные из Binance", "symbol", symbol, "err", err)
-			rateData, err = api.GetRate(symbol)
+			rateData, err = api.GetRate(symbol, "https://api.binance.com")
 			if err != nil {
 				slog.Warn("Ошибка в получении данных с сайта при запросе от пользователя", "symbol", symbol, "err", err)
 				http.Error(w, "Проблема со сторонним провайдером", http.StatusBadGateway)
@@ -60,8 +54,8 @@ func GetRateHandler(repo RatesRepository) http.HandlerFunc {
 // @Produce json
 // @Success 200 {array} models.RateResponse
 // @Failure 500 {string} string "Ошибка сервера"
-// @Router /api/rates [get]
-func GetRateAllHandlers(rate RatesRepository) http.HandlerFunc {
+// @Router /rates [get]
+func GetRateAllHandlers(rate storage.Repository) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		rates, err := rate.GetAllRates(r.Context())
