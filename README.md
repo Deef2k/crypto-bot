@@ -26,23 +26,23 @@ Telegram-бот для отслеживания курсов криптовал�
 #### Пример ответа `/rates/ADAUSDT`:
 ```json
 
-[
+
   {
     "symbol": "ADAUSDT",
     "price": "0.18340000",
     "lowPrice": "0.18060000",
     "highPrice": "0.18670000",
-    "priceChangePercent": "-0.380",
+    "priceChangePercent24h": "-0.380",
     "priceChangePercent1h": "-0.06 %"
   }
-] 
+
 ```
 ## Запуск через Docker:
 
   ### 1) git clone https://github.com/Deef2k/crypto-bot.git
   ### 2) cd crypto-bot
   ### 3) создайте и заполните файл .env
-  ### 4) docker-compose up -d
+  ### 4) docker-compose up -d --build
 
 ## Локальный запуск(для разработки):
 
@@ -51,3 +51,6 @@ Telegram-бот для отслеживания курсов криптовал�
   ### 3)Установить и запустить PosgreSQL
   ### 4)создайте и заполнить файл .env
   ### 5)go run main.go 
+
+## Пример заполнения файла .env:
+  ### .env.example  
