@@ -60,6 +60,7 @@ func Start(ctx context.Context, repo storage.Repository) {
 			separation(&myBot, &update)
 			continue
 		}
+
 		if update.Message.Command() == "start_auto" {
 			startAuto(&myBot, &update)
 			continue

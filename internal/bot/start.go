@@ -5,6 +5,7 @@ import (
 )
 
 func startBot(b *Bot, update *botapi.Update) {
-	msg := botapi.NewMessage(update.Message.Chat.ID, "Бот запущен") //создаем сообщение
-	b.bot.Send(msg)                                                 //образаемся к полям переменно, отправляем созданное сообщение
+	text := "Бот зупущен!\nСписок команд:\n/rates - курсы всех отслеживаемых валют\n/rates ...(BTCUSDT) - курс конкретной валюты(например: BTCUSDT)\n/auto_rates ...(5) - запуск авторассылки курсов валют (например: на 5 минут)\n/stop_auto_rates - остановка авторассылки курсов валют,\n/add_symbol ... (BTCUSDT) -добавить валюту в отслеживаемые (например:BTCUSDT)\n/remove_symbol ... (BTCUSDT) - удалить валюту из отслеживаемых (например:BTCUSDT)"
+	msg := botapi.NewMessage(update.Message.Chat.ID, text)
+	b.bot.Send(msg)
 }

@@ -8,8 +8,9 @@ import (
 )
 
 func addSymbol(b *Bot, update *botapi.Update) {
-	symbol := strings.TrimSpace(update.Message.CommandArguments())
+	symbol := strings.TrimSpace(update.Message.CommandArguments()) //strings.TrimSpace-удаляет все начальные и конечные пробелы
 	symbol = strings.ToUpper(symbol)
+
 	if symbol == "" {
 		b.bot.Send(botapi.NewMessage(update.Message.Chat.ID, "Укажите название пары валют"))
 		return

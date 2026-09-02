@@ -25,6 +25,7 @@ func startAuto(b *Bot, update *botapi.Update) {
 		if timeTick <= 0 {
 			slog.Warn("Пользователь ввел число меньше 0 или 0.")
 			b.bot.Send(botapi.NewMessage(update.Message.Chat.ID, "Произошла ошибка в запросе(точно ли число выше или не равно 0?)"))
+			cancel()
 			return
 		} else {
 			b.pointer.mutex.Lock()
