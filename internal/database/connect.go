@@ -11,13 +11,15 @@ import (
 )
 
 func ConnectDB() (*pgxpool.Pool, error) {
-	password := os.Getenv("DB_PASSWORD") //ВЗЯТИЕ ПАРОЛЯ ИЗ .ENV
-	port := os.Getenv("DB_PORT")
-	host := os.Getenv("DB_HOST")
-	user := os.Getenv("DB_USER")
-	dbName := os.Getenv("DB_NAME")
-
-	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s", user, password, host, port, dbName) //это строка подключения к бд(адрес по которому Go-код найдет PostgreSQL)
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		password := os.Getenv("DB_PASSWORD")
+		port := os.Getenv("DB_PORT")
+		host := os.Getenv("DB_HOST")
+		user := os.Getenv("DB_USER")
+		dbName := os.Getenv("DB_NAME")
+		dsn = fmt.Sprintf("postgres://%s:%s@%s:%s/%s", user, password, host, port, dbName)
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // создание контекста который прервет запрос к бд через 5 секуд либо при выходе из функции либо при выходе из функции
 	defer cancel()                                                          //прервет внутренний таймер который будет занимать ресурсы

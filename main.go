@@ -68,8 +68,13 @@ func main() {
 	mux.Handle("/rates", allRateHandler)
 	mux.Handle("/swagger/", httpSwagger.WrapHandler)
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
 	go func() { //запускаем горутину
-		err := http.ListenAndServe(":8080", mux)
+		err := http.ListenAndServe(":"+port, mux)
 		if err != nil {
 			slog.Error("Проблема в запуске http сервера.Ошибка:", "err", err)
 		}
