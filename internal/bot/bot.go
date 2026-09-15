@@ -14,11 +14,44 @@ type SubscriptionManager struct {
 	subscription map[int64]context.CancelFunc
 	mutex        sync.Mutex
 }
+type pendingKind string
+
+const (
+	pendingAdd    pendingKind = "add"
+	pendingRemove pendingKind = "remove"
+	pendingRates  pendingKind = "rates"
+)
+
 type Bot struct {
-	bot     *botapi.BotAPI
-	ctx     context.Context
-	pointer *SubscriptionManager
-	repo    storage.Repository
+	bot       *botapi.BotAPI
+	ctx       context.Context
+	pointer   *SubscriptionManager
+	repo      storage.Repository
+	pending   map[int64]pendingKind //int64 - ключ ChatID
+	pendingMu sync.Mutex
+}
+
+func (b *Bot) setPending(chatID int64, kind pendingKind) {
+	b.pendingMu.Lock()
+	defer b.pendingMu.Unlock()
+	b.pending[chatID] = kind
+}
+
+func (b *Bot) takePending(chatID int64) (pendingKind, bool) {
+	b.pendingMu.Lock()
+	defer b.pendingMu.Unlock()
+	kind, ok := b.pending[chatID]
+	if !ok {
+		return "", false
+	}
+	delete(b.pending, chatID)
+	return kind, true
+}
+
+func (b *Bot) clearPending(chatID int64) {
+	b.pendingMu.Lock()
+	defer b.pendingMu.Unlock()
+	delete(b.pending, chatID)
 }
 
 func Start(ctx context.Context, repo storage.Repository) {
@@ -38,6 +71,7 @@ func Start(ctx context.Context, repo storage.Repository) {
 		ctx:     ctx,
 		pointer: &subscriber,
 		repo:    repo,
+		pending: make(map[int64]pendingKind),
 	}
 
 	slog.Info("Бот создан")
@@ -52,21 +86,24 @@ func Start(ctx context.Context, repo storage.Repository) {
 		}
 
 		if update.Message.Command() == "start" {
+			myBot.clearPending(update.Message.Chat.ID)
 			startBot(&myBot, &update)
 			continue
 		}
 
 		if update.Message.Command() == "rates" {
-			separation(&myBot, &update)
+			rates(&myBot, &update)
 			continue
 		}
 
 		if update.Message.Command() == "start_auto" {
+			myBot.clearPending(update.Message.Chat.ID)
 			startAuto(&myBot, &update)
 			continue
 		}
 
 		if update.Message.Command() == "stop_auto" {
+			myBot.clearPending(update.Message.Chat.ID)
 			stopAuto(&myBot, &update)
 			continue
 		}
@@ -78,6 +115,20 @@ func Start(ctx context.Context, repo storage.Repository) {
 		if update.Message.Command() == "add_symbol" {
 			addSymbol(&myBot, &update)
 			continue
+		}
+
+		kind, ok := myBot.takePending(update.Message.Chat.ID)
+		if !ok {
+			continue
+		}
+
+		switch kind {
+		case pendingAdd:
+			applyAddSymbol(&myBot, update.Message.Chat.ID, update.Message.Text)
+		case pendingRemove:
+			applyRemoveSymbol(&myBot, update.Message.Chat.ID, update.Message.Text)
+		case pendingRates:
+			applyRates(&myBot, update.Message.Chat.ID, update.Message.Text)
 		}
 	}
 }

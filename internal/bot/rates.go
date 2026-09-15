@@ -10,30 +10,38 @@ import (
 	botapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func separation(b *Bot, update *botapi.Update) {
-	args := strings.TrimSpace(update.Message.CommandArguments())
-	if args == "" {
-		showAllTrackedRates(b, update)
-		return
-	} else {
-		showRateBySymbol(b, update)
-	}
+func rates(b *Bot, update *botapi.Update) {
+	b.setPending(update.Message.Chat.ID, pendingRates)
+	b.bot.Send(botapi.NewMessage(update.Message.Chat.ID, "Введите пару, например BTCUSDT. Чтобы увидеть все отслеживаемые курсы — напишите all"))
 }
-func showAllTrackedRates(b *Bot, update *botapi.Update) {
+
+func applyRates(b *Bot, chatID int64, symbol string) {
+	symbol = strings.ToUpper(strings.TrimSpace(symbol))
+	if symbol == "" {
+		b.bot.Send(botapi.NewMessage(chatID, "Укажите название пары валют или all"))
+		return
+	}
+	if symbol == "ALL" || symbol == "ВСЕ" {
+		showAllTrackedRates(b, chatID)
+		return
+	}
+	showRateBySymbol(b, chatID, symbol)
+}
+
+func showAllTrackedRates(b *Bot, chatID int64) {
 	times := time.Now().Format("2006-01-02 15:04:05\n")
 	rates, err := b.repo.GetAllRates(b.ctx)
 	if err != nil {
 		slog.Warn("Не удалось получить курсы всех валют с бота -", "err", err)
-		b.bot.Send(botapi.NewMessage(update.Message.Chat.ID, "Функция временно не работает")) //update.Message.Chat.ID-заменяет messageID
+		b.bot.Send(botapi.NewMessage(chatID, "Функция временно не работает"))
 		return
 	}
 	text := FormatRates(rates, "Курсы валют на -", times)
-	msg := botapi.NewMessage(update.Message.Chat.ID, text)
+	msg := botapi.NewMessage(chatID, text)
 	b.bot.Send(msg)
 }
 
-func showRateBySymbol(b *Bot, update *botapi.Update) {
-	symbol := strings.TrimSpace(update.Message.CommandArguments())
+func showRateBySymbol(b *Bot, chatID int64, symbol string) {
 	times := time.Now().Format("2006-01-02 15:04:05\n")
 
 	rate, err := b.repo.GetLastRate(b.ctx, symbol)
@@ -42,12 +50,12 @@ func showRateBySymbol(b *Bot, update *botapi.Update) {
 		rate, err = fetchRate(b, symbol)
 		if err != nil {
 			slog.Warn("Ошибка в получении курса из API", "err", err)
-			b.bot.Send(botapi.NewMessage(update.Message.Chat.ID, "Произошла ошибка (Убедитесь что ввели правильно название пары!)"))
+			b.bot.Send(botapi.NewMessage(chatID, "Произошла ошибка (Убедитесь что ввели правильно название пары!)"))
 			return
 		}
 	}
 	text := FormatRates([]models.RateResponse{rate}, "Курсы валют на -", times)
-	msg := botapi.NewMessage(update.Message.Chat.ID, text)
+	msg := botapi.NewMessage(chatID, text)
 	b.bot.Send(msg)
 }
 

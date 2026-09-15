@@ -9,19 +9,23 @@ import (
 )
 
 func removeSymbol(b *Bot, update *botapi.Update) {
+	b.setPending(update.Message.Chat.ID, pendingRemove)
+	b.bot.Send(botapi.NewMessage(update.Message.Chat.ID, "Введите пару для удаления, например BTCUSDT"))
+}
 
-	symbol := strings.ToUpper(strings.TrimSpace(update.Message.CommandArguments())) //toUpper- нужен что-бы если передали название в нижнем регистре он поднял до верхнео
+func applyRemoveSymbol(b *Bot, chatID int64, symbol string) {
+	symbol = strings.ToUpper(strings.TrimSpace(symbol))
 	if symbol == "" {
-		b.bot.Send(botapi.NewMessage(update.Message.Chat.ID, "Пожалуйста, введите название валюты"))
+		b.bot.Send(botapi.NewMessage(chatID, "Пожалуйста, введите название валюты"))
 		return
 	}
 
 	err := b.repo.RemoveTrackedSymbol(b.ctx, symbol)
 	if err != nil {
 		slog.Error("Ошибка в удалении символа из БД", "err", err)
-		b.bot.Send(botapi.NewMessage(update.Message.Chat.ID, "Произошла ошибка при удалении символа из БД"))
+		b.bot.Send(botapi.NewMessage(chatID, "Произошла ошибка при удалении символа из БД"))
 		return
 	}
 	text := fmt.Sprintf("Символ %s успешно удален из отслеживаемых валют", symbol)
-	b.bot.Send(botapi.NewMessage(update.Message.Chat.ID, text))
+	b.bot.Send(botapi.NewMessage(chatID, text))
 }
